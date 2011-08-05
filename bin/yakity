@@ -1,0 +1,29 @@
+#!/usr/bin/env python
+# vim: fileencoding=utf8:et:sta:ai:sw=4:ts=4:sts=4
+
+import optparse
+import os
+import sys
+
+from yakity import commandline, configs
+
+
+def main(environ, argv):
+    parser = optparse.OptionParser()
+    parser.add_option("-c", "--configfile", default="yakity.conf")
+
+    options, args = parser.parse_args(argv[1:])
+
+    conf = configs.get_configs(options.configfile)
+
+    if not args:
+        print >> sys.stderr, "missing command"
+        return 1
+
+    getattr(commandline, args[0])(conf, *args[1:])
+
+    return 0
+
+
+if __name__ == '__main__':
+    sys.exit(main(os.environ, sys.argv))

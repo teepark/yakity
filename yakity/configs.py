@@ -1,5 +1,6 @@
 import ConfigParser
 import math
+import random
 
 
 class ConfigBag(object):
@@ -43,14 +44,27 @@ def get_configs(config_file):
         roomsets.append(inst['roomset'])
         roompeers.setdefault(inst['roomset'], []).append(i)
 
-    main['roomsets'] = orderwise_singularize(roomsets)
+    roomsets = orderwise_singularize(roomsets)
+    roombroadcast = dict((rs, i) for i, rs in enumerate(roomsets))
+
+    for inst in instances:
+        inst['pubval'] = roombroadcast[inst['roomset']]
+
+    main['roomsets'] = roomsets
     main['roompeers'] = roompeers
+    main['roombroadcast'] = roombroadcast
     main['instances'] = map(ConfigBag, instances)
     main = ConfigBag(main)
 
     return main
 
-def rid(conf, roomname, username):
+def rpc_rid(conf, roomname, username=None):
     roomset = conf.roomsets[hash(roomname) % len(conf.roomsets)]
     peers = conf.roompeers[roomset]
-    return peers[hash(username) % len(peers)]
+    if username is not None:
+        peers[hash(username) % len(peers)]
+    return random.choice(peers)
+
+def pub_rid(conf, roomname):
+    roomset = conf.roomsets[hash(roomname) % len(conf.roomsets)]
+    return conf.roombroadcast[roomset]
