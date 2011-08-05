@@ -1,4 +1,5 @@
 import collections
+import time
 
 import greenhouse
 
@@ -16,6 +17,7 @@ class Room(object):
         self._wait.set()
         self._wait.clear()
         item['counter'] = self._total
+        item['timestamp'] = time.mktime(time.gmtime())
         return self._total
 
     def since(self, count):
