@@ -112,8 +112,6 @@ class Yakity(object):
                     return
             if result:
                 latest = result[-1]['counter']
-            else:
-                print "bouncing the read after a server-side timeout"
 
 
 class YakityError(Exception):
