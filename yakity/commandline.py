@@ -1,5 +1,3 @@
-#!/usr/bin/env python
-# vim: fileencoding=utf8:et:sta:ai:sw=4:ts=4:sts=4
 from __future__ import absolute_import
 
 import sys
@@ -15,7 +13,7 @@ signal = greenhouse.patched("signal")
 def runservice(conf, instance_name):
     instance = [inst for inst in conf.instances if inst.name == instance_name]
     if not instance:
-        print >> sys.stderr, "unknown shard %r" % sys.argv[1]
+        print >> sys.stderr, "unknown shard %r" % instance_name
         return
     instance = instance[0]
 

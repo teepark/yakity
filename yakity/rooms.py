@@ -25,6 +25,7 @@ class Room(object):
         return list(self._data)[index:]
 
     def wait(self, count, timeout=None):
-        if count >= self._total and self._wait.wait(timeout):
+        if count == self._total and self._wait.wait(timeout):
             return []
+
         return self.since(count)

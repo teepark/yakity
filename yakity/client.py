@@ -27,7 +27,7 @@ def prepare_client(conf, room_hint=None, user_hint=None):
     return client
 
 class Yakity(object):
-    def __init__(self, config, junc_client, username,
+    def __init__(self, config, junc_client, username=None,
             write_timeout=5.0, wait_timeout=None, cache_len=16):
         self._client = junc_client
         self._username = username
