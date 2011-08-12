@@ -5,9 +5,9 @@ import sys
 import time
 import traceback
 
-import yajl
-
+import greenhouse
 from . import client
+import yajl
 
 
 class WSGIApp(object):
@@ -50,8 +50,7 @@ class WSGIApp(object):
             yak.depart(roomname)
             return '{"success":true}'
 
-    def __call__(self, environ, start_response):
-        # auth required
+    def _auth(self, environ, start_response):
         if 'HTTP_AUTHORIZATION' not in environ:
             start_response("401 Unauthorized", [
                 ("Content-Type", "text/plain"),
@@ -69,6 +68,12 @@ class WSGIApp(object):
             ])
             return ["basic authorization required."]
         environ['auth'] = token.decode("base64").split(":", 1)
+
+    def __call__(self, environ, start_response):
+        # auth required
+        result = self._auth(environ, start_response)
+        if result is not None:
+            return result
 
         try:
             result = self._handle(environ, start_response)

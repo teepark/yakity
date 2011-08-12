@@ -10,7 +10,8 @@ from . import client, configs, service
 signal = greenhouse.patched("signal")
 
 
-def runservice(conf, instance_name):
+def runservice(options, instance_name):
+    conf = configs.get_configs(options.configfile)
     instance = [inst for inst in conf.instances if inst.name == instance_name]
     if not instance:
         print >> sys.stderr, "unknown shard %r" % instance_name
@@ -28,7 +29,8 @@ def runservice(conf, instance_name):
         pass
 
 
-def listen(conf, roomname, username=None):
+def listen(options, roomname, username=None):
+    conf = configs.get_configs(options.configfile)
     yak = client.Yakity(conf, client.prepare_client(
                 conf, room_hint=roomname, user_hint=username), None)
 
@@ -59,7 +61,8 @@ def listen(conf, roomname, username=None):
         pass
 
 
-def speak(conf, roomname, username):
+def converse(options, roomname, username):
+    conf = configs.get_configs(options.configfile)
     def int_handler(signum, frame):
         greenhouse.end(speaker_glet)
     signal.signal(signal.SIGINT, int_handler)
@@ -73,14 +76,36 @@ def speak(conf, roomname, username):
     @greenhouse.greenlet
     def speaker_glet():
         try:
-            yak.join(roomname)
+            if options.auto_join:
+                yak.join(roomname)
             print "(ctrl-c to exit)"
             while 1:
                 greenhouse.stdout.write("%s> " % roomname)
                 line = greenhouse.stdin.readline().rstrip()
                 if line: yak.say(roomname, line)
         finally:
-            yak.depart(roomname)
+            if options.auto_join:
+                yak.depart(roomname)
             finished.set()
 
     finished.wait()
+
+
+def join(options, roomname, username):
+    conf = configs.get_configs(options.configfile)
+    yak = client.Yakity(conf, client.prepare_client(
+        conf, room_hint=roomname, user_hint=username), username)
+    yak.join(roomname)
+
+
+def depart(options, roomname, username):
+    conf = configs.get_configs(options.configfile)
+    yak = client.Yakity(conf, client.prepare_client(
+        conf, room_hint=roomname, user_hint=username), username)
+    yak.depart(roomname)
+
+def say(options, roomname, username, msg):
+    conf = configs.get_configs(options.configfile)
+    yak = client.Yakity(conf, client.prepare_client(
+        conf, room_hint=roomname, user_hint=username), username)
+    yak.say(roomname, msg)
