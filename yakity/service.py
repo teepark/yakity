@@ -30,13 +30,14 @@ def register(node, config, instance_config):
             ('peer_join', peer_join),
             ('peer_depart', peer_depart),
             ('peer_say', peer_say)]:
-        node.accept_publish(
-                config.service,
-                name,
-                instance_config.mask,
-                instance_config.pubval,
-                functools.partial(handler, node),
-                schedule=schedule)
+        for pubval in instance_config.pubvals:
+            node.accept_publish(
+                    config.service,
+                    name,
+                    instance_config.mask,
+                    pubval,
+                    functools.partial(handler, node),
+                    schedule=schedule)
 
 
 def get_room(name):

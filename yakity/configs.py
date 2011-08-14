@@ -10,10 +10,11 @@ class ConfigBag(object):
 def orderwise_singularize(data):
     memo = set()
     results = []
-    for item in data:
-        if item not in memo:
-            memo.add(item)
-            results.append(item)
+    for subset in data:
+        for item in subset:
+            if item not in memo:
+                memo.add(item)
+                results.append(item)
     return results
 
 def get_configs(config_file):
@@ -31,6 +32,7 @@ def get_configs(config_file):
         inst = dict(parser.items(section))
         inst['name'] = section
         inst['port'] = int(inst['port'])
+        inst['roomsets'] = filter(None, inst['roomsets'].split(','))
         inst['addr'] = (inst['host'], inst['port'])
         instances.append(inst)
     instances.sort(key=lambda i: i['addr'])
@@ -41,14 +43,15 @@ def get_configs(config_file):
         inst['mask'] = mask
         inst['value'] = i
         inst['peers'] = [n['addr'] for j, n in enumerate(instances) if i != j]
-        roomsets.append(inst['roomset'])
-        roompeers.setdefault(inst['roomset'], []).append(i)
+        roomsets.append(inst['roomsets'])
+        for roomset in inst['roomsets']:
+            roompeers.setdefault(roomset, []).append(i)
 
     roomsets = orderwise_singularize(roomsets)
     roombroadcast = dict((rs, i) for i, rs in enumerate(roomsets))
 
     for inst in instances:
-        inst['pubval'] = roombroadcast[inst['roomset']]
+        inst['pubvals'] = [roombroadcast[r] for r in inst['roomsets']]
 
     main['roomsets'] = roomsets
     main['roompeers'] = roompeers
