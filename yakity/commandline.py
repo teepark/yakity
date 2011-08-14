@@ -83,6 +83,10 @@ def converse(options, roomname, username):
                 greenhouse.stdout.write("%s> " % roomname)
                 line = greenhouse.stdin.readline().rstrip()
                 if line: yak.say(roomname, line)
+        except client.YakityError:
+            if not options.auto_join:
+                print >> sys.stderr, ("not currently in room; use `yakity "
+                        "join` or omit -! from `yakity converse`")
         finally:
             if options.auto_join:
                 yak.depart(roomname)
