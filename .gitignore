@@ -8,6 +8,7 @@ build/*
 docs/build/*
 dist/*
 html/*
+yakity.conf
 
 .coverage
 coverage_annotated/*
