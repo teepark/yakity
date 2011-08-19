@@ -63,6 +63,7 @@ def listen(options, roomname, username=None):
 
 def converse(options, roomname, username):
     conf = configs.get_configs(options.configfile)
+
     def int_handler(signum, frame):
         greenhouse.end(speaker_glet)
     signal.signal(signal.SIGINT, int_handler)

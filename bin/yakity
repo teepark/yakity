@@ -4,9 +4,13 @@
 import optparse
 import os
 import sys
+import traceback
 
+import greenhouse
 from yakity import commandline, configs
 
+
+greenhouse.global_exception_handler(traceback.print_exception)
 
 def main(environ, argv):
     parser = optparse.OptionParser()

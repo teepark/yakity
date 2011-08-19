@@ -11,6 +11,8 @@ import yajl
 
 
 class WSGIApp(object):
+    REALM = "yakity api (password ignored)"
+
     def __init__(self, conf):
         self._config = conf
         self._junction_client = client.prepare_client(conf)
@@ -55,7 +57,7 @@ class WSGIApp(object):
             start_response("401 Unauthorized", [
                 ("Content-Type", "text/plain"),
                 ("Content-Length", "23"),
-                ("WWW-Authenticate", 'Basic realm="yakity api"'),
+                ("WWW-Authenticate", self.REALM),
             ])
             return ["authorization required."]
         authtype, token = filter(None,
@@ -64,7 +66,7 @@ class WSGIApp(object):
             start_response("401 Unauthorized", [
                 ("Content-Type", "text/plain"),
                 ("Content-Length", "29"),
-                ("WWW-Authenticate", 'Basic realm="yakity api"'),
+                ("WWW-Authenticate", self.REALM),
             ])
             return ["basic authorization required."]
         environ['auth'] = token.decode("base64").split(":", 1)
