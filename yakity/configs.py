@@ -37,7 +37,7 @@ def get_configs(config_file):
         instances.append(inst)
     instances.sort(key=lambda i: i['addr'])
 
-    mask = int(math.ceil(math.log(len(instances), 2)))
+    mask = (1 << int(math.ceil(math.log(len(instances), 2)))) - 1
 
     for i, inst in enumerate(instances):
         inst['mask'] = mask
