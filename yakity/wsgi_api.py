@@ -57,7 +57,7 @@ class WSGIApp(object):
             start_response("401 Unauthorized", [
                 ("Content-Type", "text/plain"),
                 ("Content-Length", "23"),
-                ("WWW-Authenticate", self.REALM),
+                ("WWW-Authenticate", 'Basic realm="%s"' % (self.REALM,)),
             ])
             return ["authorization required."]
         authtype, token = filter(None,
@@ -66,7 +66,7 @@ class WSGIApp(object):
             start_response("401 Unauthorized", [
                 ("Content-Type", "text/plain"),
                 ("Content-Length", "29"),
-                ("WWW-Authenticate", self.REALM),
+                ("WWW-Authenticate", 'Basic realm="%s"' % (self.REALM,)),
             ])
             return ["basic authorization required."]
         environ['auth'] = token.decode("base64").split(":", 1)
