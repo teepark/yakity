@@ -20,8 +20,6 @@ def main(environ, argv):
 
     options, args = parser.parse_args(argv[1:])
 
-    conf = configs.get_configs(options.configfile)
-
     if not args:
         print >> sys.stderr, "missing command"
         return 1
