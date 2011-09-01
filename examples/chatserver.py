@@ -27,7 +27,7 @@ def app(conf, environ, start_response):
     return wsgi_api.WSGIApp(conf)(environ, start_response)
 
 
-homepage = """<doctype html>
+homepage = r"""<doctype html>
 <html>
   <head>
     <style type="text/css">
@@ -4886,6 +4886,8 @@ jQuery.extend({
 						val += parseFloat(jQuery.curCSS( elem, "margin" + this, true)) || 0;
 					} else {
 						val -= parseFloat(jQuery.curCSS( elem, "border" + this + "Width", true)) || 0;
+                    }
+                });
 			}
 
 			return Math.max(0, Math.round(val));
