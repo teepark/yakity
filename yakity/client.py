@@ -11,17 +11,26 @@ UNSPECIFIED = object()
 
 
 def prepare_client(conf, room_hint=None, user_hint=None):
-    if room_hint is None:
-        peer = random.choice(conf.instances)
-    else:
-        if user_hint is None:
-            roomset = conf.roomsets[hash(room_hint) % len(conf.roomsets)]
-            peer = conf.instances[random.choice(conf.roompeers[roomset])]
-        else:
-            rid = configs.rpc_rid(conf, room_hint, user_hint)
-            peer = conf.instances[rid]
+    peers = [peer.addr for peer in conf.instances]
+    random.shuffle(peers)
 
-    client = junction.Client(peer.addr)
+    if room_hint is not None:
+        # shuffle the peers hosting the relevant room to the top of the list
+        roomset = conf.roomsets[hash(room_hint) % len(conf.roomsets)]
+        roomset = set(conf.roompeers[roomset])
+        l1, l2 = [], []
+        for i, peer in enumerate(peers):
+            (l1 if i in roomset else l2).append(peer)
+        peers = l1 + l2
+
+        # shuffle the peer that should serve this username further up
+        if user_hint is not None:
+            rid = configs.rpc_rid(conf, room_hint, user_hint)
+            peer = conf.instances[rid].addr
+            peers.remove(peer)
+            peers = [peer] + peers
+
+    client = junction.Client(peers)
     client.connect()
     client.wait_on_connections()
     return client
@@ -37,12 +46,14 @@ class Yakity(object):
         self._rid_affinity = {}
 
     def _rid(self, roomname):
-        if self._username is None:
-            if roomname not in self._rid_affinity:
-                self._rid_affinity[roomname] = configs.rpc_rid(
-                        self._config, roomname)
-            return self._rid_affinity[roomname]
-        return configs.rpc_rid(self._config, roomname, self._username)
+        rid = self._rid_affinity.get(roomname)
+        if rid is None:
+            if self._username is None:
+                rid = configs.rpc_rid(self._config, roomname)
+            else:
+                rid = configs.rpc_rid(self._config, roomname, self._username)
+            self._rid_affinity[roomname] = rid
+        return rid
 
     def join(self, roomname):
         result = self._client.rpc(

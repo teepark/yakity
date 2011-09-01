@@ -23,8 +23,8 @@ def get_configs(config_file):
 
     main = dict(parser.items("main"))
     instances = []
-    roomsets = []
-    roompeers = {}
+    roomsets = []  # ordered list of all roomsets
+    roompeers = {} # roomset -> list of RIDs
 
     for section in parser.sections():
         if section == 'main':
@@ -48,6 +48,8 @@ def get_configs(config_file):
             roompeers.setdefault(roomset, []).append(i)
 
     roomsets = orderwise_singularize(roomsets)
+
+    # roomset -> broadcast RID
     roombroadcast = dict((rs, i) for i, rs in enumerate(roomsets))
 
     for inst in instances:
@@ -65,7 +67,7 @@ def rpc_rid(conf, roomname, username=None):
     roomset = conf.roomsets[hash(roomname) % len(conf.roomsets)]
     peers = conf.roompeers[roomset]
     if username is not None:
-        peers[hash(username) % len(peers)]
+        return peers[hash(username) % len(peers)]
     return random.choice(peers)
 
 def pub_rid(conf, roomname):
