@@ -7,7 +7,13 @@ import traceback
 
 import greenhouse
 from . import client
-import yajl
+try:
+    import yajl as json
+except ImportError:
+    try:
+        import simplejson as json
+    except ImportError:
+        import json
 
 
 class WSGIApp(object):
@@ -37,7 +43,7 @@ class WSGIApp(object):
                 result = yak.read(roomname, last_seen)
                 for r in result:
                     r['timestamp'] = time.ctime(r['timestamp'] + timediff)
-                return yajl.dumps(result)
+                return json.dumps(result)
 
             if environ['REQUEST_METHOD'] == 'POST':
                 msg = environ['wsgi.input'].read()
