@@ -236,6 +236,16 @@ homepage = r"""<doctype html>
 
             chatinput.val('');
           });
+
+          $(window).bind('unload', function() {
+            $.ajax({
+              url: "/" + roomnamebox.val() + "/depart",
+              username: usernamebox.val(),
+              password: '',
+              dataType: 'json',
+              async: false
+            });
+          });
         });
     </script>
   </body>
