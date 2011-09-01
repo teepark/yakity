@@ -34,26 +34,20 @@ def listen(options, roomname, username=None):
     yak = client.Yakity(conf, client.prepare_client(
                 conf, room_hint=roomname, user_hint=username), None)
 
+    # timestamps in the service are done in GMT
     timediff = time.mktime(time.localtime()) - time.mktime(time.gmtime())
 
     try:
         for event in yak.stream(roomname):
+            ts = time.ctime(event['timestamp'] + timediff)
             if event['event'] == 'join':
-                print "[%s] * %s has joined" % (
-                        time.ctime(event['timestamp'] + timediff),
-                        event['username'])
+                print "[%s] * %s has joined" % (ts, event['username'])
             elif event['event'] == 'depart':
-                print "[%s] * %s has left" % (
-                        time.ctime(event['timestamp'] + timediff),
-                        event['username'])
+                print "[%s] * %s has left" % (ts, event['username'])
             elif event['event'] == 'msg':
-                print "[%s] <%s> %s" % (
-                        time.ctime(event['timestamp'] + timediff),
-                        event['username'],
-                        event['msg'])
+                print "[%s] <%s> %s" % (ts, event['username'], event['msg'])
             elif event['event'] == 'destruction':
-                print "[%s] * ROOM CLOSED" % (
-                        time.ctime(event['timestamp'] + timediff),)
+                print "[%s] * ROOM CLOSED" % (ts,)
                 break
             else:
                 raise Exception("unrecognized event: %r" % event)
