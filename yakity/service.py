@@ -37,7 +37,7 @@ def register(node, config, instance_config):
                     instance_config.mask,
                     pubval,
                     functools.partial(handler, node),
-                    schedule=schedule)
+                    schedule=False)
 
 
 def get_room(name):
