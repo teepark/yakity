@@ -6493,6 +6493,8 @@ window.jQuery = window.$ = jQuery;
 def main(environ, argv):
     conf = configs.get_configs("yakity.conf")
 
+    # enable both access and error logging, and print it to stdout
+    logging.getLogger().setLevel(logging.INFO)
     logging.getLogger().addHandler(logging.StreamHandler())
 
     wsgi.serve(("localhost", 8989),
