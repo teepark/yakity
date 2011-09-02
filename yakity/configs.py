@@ -63,16 +63,16 @@ def get_configs(config_file):
 
     return main
 
-def rpc_rid(conf, roomname, username=None):
-    rids = rpc_rids(conf, roomname)
-    if username is not None:
-        return rids[hash(username) % len(rids)]
-    return random.choice(rids)
+def roomset(conf, roomname):
+    return conf.roomsets[hash(roomname) % len(conf.roomsets)]
 
-def rpc_rids(conf, roomname):
-    roomset = conf.roomsets[hash(roomname) % len(conf.roomsets)]
-    return conf.roompeers[roomset]
+def rids(conf, roomset, username=None):
+    result = conf.roompeers[roomset][:]
+    if username is not None:
+        preferred = result[hash(username) % len(result)]
+        result.remove(preferred)
+        result = [preferred] + result
+    return result
 
 def pub_rid(conf, roomname):
-    roomset = conf.roomsets[hash(roomname) % len(conf.roomsets)]
-    return conf.roombroadcast[roomset]
+    return conf.roombroadcast[roomset(conf, roomname)]

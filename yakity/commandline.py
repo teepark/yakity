@@ -98,7 +98,6 @@ def join(options, roomname, username):
         conf, room_hint=roomname, user_hint=username), username)
     yak.join(roomname)
 
-
 def depart(options, roomname, username):
     conf = configs.get_configs(options.configfile)
     yak = client.Yakity(conf, client.prepare_client(

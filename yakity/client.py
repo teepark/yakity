@@ -17,16 +17,17 @@ def prepare_client(conf, room_hint=None, user_hint=None):
 
     if room_hint is not None:
         # shuffle the peers hosting the relevant room to the top of the list
-        roomset = conf.roomsets[hash(room_hint) % len(conf.roomsets)]
-        roomset = set(conf.roompeers[roomset])
+        rids = set(configs.rids(conf, configs.roomset(conf, room_hint)))
         l1, l2 = [], []
         for i, peer in enumerate(peers):
-            (l1 if i in roomset else l2).append(peer)
+            (l1 if i in rids else l2).append(peer)
         peers = l1 + l2
 
         # shuffle the peer that should serve this username further up
         if user_hint is not None:
-            rid = configs.rpc_rid(conf, room_hint, user_hint)
+            rid = configs.rids(conf,
+                    configs.roomset(conf, room_hint),
+                    username=user_hint)[0]
             peer = conf.instances[rid].addr
             peers.remove(peer)
             peers = [peer] + peers
@@ -46,10 +47,19 @@ class Yakity(object):
         self._config = config
         self._write_timeout = write_timeout
         self._wait_timeout = wait_timeout
-        self._rid_affinity = {}
+        self._affinity = {} # roomset -> rid that has worked before
 
     def _rpc(self, method, roomname, args, kwargs, timeout):
-        for rid in configs.rpc_rids(self._config, roomname):
+        roomset = configs.roomset(self._config, roomname)
+        rids = configs.rids(self._config, roomset, username=self._username)
+        preferred = None
+
+        if roomset in self._affinity:
+            preferred = self._affinity[roomset]
+            rids.remove(preferred)
+            rids = [preferred] + rids
+
+        for rid in rids:
             try:
                 result = self._client.rpc(
                         self._config.service,
@@ -61,6 +71,9 @@ class Yakity(object):
             except junction.errors.Unroutable:
                 continue
 
+            # the message went through, so the service is up for this rid
+            self._affinity[roomset] = rid
+
             if isinstance(result, Exception):
                 raise result
             if result:
@@ -68,16 +81,6 @@ class Yakity(object):
             raise YakityError(method)
 
         raise junction.errors.Unroutable()
-
-    def _rid(self, roomname):
-        rid = self._rid_affinity.get(roomname)
-        if rid is None:
-            if self._username is None:
-                rid = configs.rpc_rid(self._config, roomname)
-            else:
-                rid = configs.rpc_rid(self._config, roomname, self._username)
-            self._rid_affinity[roomname] = rid
-        return rid
 
     def join(self, roomname):
         self._rpc('join', roomname, (roomname, self._username), {},
