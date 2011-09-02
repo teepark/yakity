@@ -4,6 +4,7 @@ import collections
 import random
 
 import junction
+import junction.errors
 from . import configs
 
 
@@ -32,7 +33,9 @@ def prepare_client(conf, room_hint=None, user_hint=None):
 
     client = junction.Client(peers)
     client.connect()
-    client.wait_on_connections()
+    while client.wait_on_connections():
+        client.reset()
+        client.connect()
     return client
 
 class Yakity(object):
@@ -45,6 +48,27 @@ class Yakity(object):
         self._wait_timeout = wait_timeout
         self._rid_affinity = {}
 
+    def _rpc(self, method, roomname, args, kwargs, timeout):
+        for rid in configs.rpc_rids(self._config, roomname):
+            try:
+                result = self._client.rpc(
+                        self._config.service,
+                        method,
+                        rid,
+                        args,
+                        kwargs,
+                        timeout)[0]
+            except junction.errors.Unroutable:
+                continue
+
+            if isinstance(result, Exception):
+                raise result
+            if result:
+                return result
+            raise YakityError(method)
+
+        raise junction.errors.Unroutable()
+
     def _rid(self, roomname):
         rid = self._rid_affinity.get(roomname)
         if rid is None:
@@ -56,62 +80,22 @@ class Yakity(object):
         return rid
 
     def join(self, roomname):
-        result = self._client.rpc(
-                self._config.service,
-                'join',
-                self._rid(roomname),
-                (roomname, self._username),
-                {},
-                self._write_timeout)[0]
-
-        if isinstance(result, Exception):
-            raise result
-        if not result:
-            raise YakityError('join')
+        self._rpc('join', roomname, (roomname, self._username), {},
+                self._write_timeout)
 
     def depart(self, roomname):
-        result = self._client.rpc(
-                self._config.service,
-                'depart',
-                self._rid(roomname),
-                (roomname, self._username),
-                {},
-                self._write_timeout)[0]
-
-        if isinstance(result, Exception):
-            raise result
-        if not result:
-            raise YakityError('depart')
+        self._rpc('depart', roomname, (roomname, self._username), {},
+                self._write_timeout)
 
     def say(self, roomname, message):
-        result = self._client.rpc(
-                self._config.service,
-                'say',
-                self._rid(roomname),
-                (roomname, self._username, message),
-                {},
-                self._write_timeout)[0]
-
-        if isinstance(result, Exception):
-            raise result
-        if not result:
-            raise YakityError('say')
+        self._rpc('say', roomname, (roomname, self._username, message), {},
+                self._write_timeout)
 
     def read(self, roomname, last_seen, timeout=UNSPECIFIED):
         if timeout is UNSPECIFIED:
             timeout = self._wait_timeout
 
-        result = self._client.rpc(
-                self._config.service,
-                'wait',
-                self._rid(roomname),
-                (roomname, last_seen),
-                {},
-                timeout)[0]
-
-        if isinstance(result, Exception):
-            raise result
-        return result
+        return self._rpc('wait', roomname, (roomname, last_seen), {}, timeout)
 
     def stream(self, roomname):
         latest = 0

@@ -57,15 +57,10 @@ def listen(options, roomname, username=None):
 
 def converse(options, roomname, username):
     conf = configs.get_configs(options.configfile)
-
-    def int_handler(signum, frame):
-        greenhouse.end(speaker_glet)
-    signal.signal(signal.SIGINT, int_handler)
+    finished = greenhouse.Event()
 
     yak = client.Yakity(conf, client.prepare_client(
         conf, room_hint=roomname, user_hint=username), username)
-
-    finished = greenhouse.Event()
 
     @greenhouse.schedule
     @greenhouse.greenlet
@@ -84,8 +79,15 @@ def converse(options, roomname, username):
                         "join` or omit -! from `yakity converse`")
         finally:
             if options.auto_join:
-                yak.depart(roomname)
+                try:
+                    yak.depart(roomname)
+                except Exception, exc:
+                    pass
             finished.set()
+
+    def int_handler(signum, frame):
+        greenhouse.end(speaker_glet)
+    signal.signal(signal.SIGINT, int_handler)
 
     finished.wait()
 
