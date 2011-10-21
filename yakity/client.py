@@ -69,6 +69,7 @@ class Yakity(object):
                         kwargs,
                         timeout)[0]
             except junction.errors.Unroutable:
+                # TODO: log a warning here about an instance being down
                 continue
 
             # the message went through, so the service is up for this rid
