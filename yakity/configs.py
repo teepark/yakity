@@ -49,6 +49,9 @@ def get_configs(config_file):
 
     roomsets = orderwise_singularize(roomsets)
 
+    for inst in instances:
+        inst['pubmask'] = (1 << int(math.ceil(math.log(len(roomsets), 2)))) - 1
+
     # roomset -> broadcast RID
     roombroadcast = dict((rs, i) for i, rs in enumerate(roomsets))
 

@@ -34,7 +34,7 @@ def prepare_client(conf, room_hint=None, user_hint=None):
 
     client = junction.Client(peers)
     client.connect()
-    while client.wait_on_connections():
+    while not client.wait_on_connections():
         client.reset()
         client.connect()
     return client
@@ -52,7 +52,6 @@ class Yakity(object):
     def _rpc(self, method, roomname, args, kwargs, timeout):
         roomset = configs.roomset(self._config, roomname)
         rids = configs.rids(self._config, roomset, username=self._username)
-        preferred = None
 
         if roomset in self._affinity:
             preferred = self._affinity[roomset]
@@ -63,8 +62,8 @@ class Yakity(object):
             try:
                 result = self._client.rpc(
                         self._config.service,
-                        method,
                         rid,
+                        method,
                         args,
                         kwargs,
                         timeout)[0]

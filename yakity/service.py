@@ -2,6 +2,7 @@ from __future__ import absolute_import
 
 import functools
 
+import greenhouse
 from . import rooms, configs
 
 
@@ -20,9 +21,9 @@ def register(node, config, instance_config):
             ('wait', wait, True)]:
         node.accept_rpc(
                 config.service,
-                name,
                 instance_config.mask,
                 instance_config.value,
+                name,
                 functools.partial(handler, node, config),
                 schedule=schedule)
 
@@ -33,11 +34,13 @@ def register(node, config, instance_config):
         for pubval in instance_config.pubvals:
             node.accept_publish(
                     config.service,
-                    name,
-                    instance_config.mask,
+                    instance_config.pubmask,
                     pubval,
+                    name,
                     functools.partial(handler, node),
                     schedule=False)
+
+    greenhouse.set_ignore_interrupts()
 
 
 def get_room(name):
@@ -93,21 +96,18 @@ def peer_say(node, from_addr, roomname, username, message):
 
 
 def join(node, config, roomname, username):
-    node.publish(config.service, "peer_join",
-            configs.pub_rid(config, roomname),
-            (node.addr, roomname, username), {})
+    node.publish(config.service, configs.pub_rid(config, roomname),
+            "peer_join", (node.addr, roomname, username), {})
     return _join(roomname, username)
 
 def depart(node, config, roomname, username):
-    node.publish(config.service, "peer_depart",
-            configs.pub_rid(config, roomname),
-            (node.addr, roomname, username), {})
+    node.publish(config.service, configs.pub_rid(config, roomname),
+            "peer_depart", (node.addr, roomname, username), {})
     return _depart(roomname, username)
 
 def say(node, config, roomname, username, message):
-    node.publish(config.service, "peer_say",
-            configs.pub_rid(config, roomname),
-            (node.addr, roomname, username, message), {})
+    node.publish(config.service, configs.pub_rid(config, roomname),
+            "peer_say", (node.addr, roomname, username, message), {})
     return _say(roomname, username, message)
 
 def wait(node, config, roomname, last_seen):

@@ -18,7 +18,7 @@ def runservice(options, instance_name):
         return
     instance = instance[0]
 
-    node = junction.Node(instance.addr, instance.peers)
+    node = junction.Hub(instance.addr, instance.peers)
     service.register(node, conf, instance)
     node.start()
     node.wait_on_connections()
@@ -58,6 +58,7 @@ def listen(options, roomname, username=None):
 def converse(options, roomname, username):
     conf = configs.get_configs(options.configfile)
     finished = greenhouse.Event()
+    joined = greenhouse.Event()
 
     yak = client.Yakity(conf, client.prepare_client(
         conf, room_hint=roomname, user_hint=username), username)
@@ -65,9 +66,9 @@ def converse(options, roomname, username):
     @greenhouse.schedule
     @greenhouse.greenlet
     def speaker_glet():
+        if options.auto_join:
+            joined.wait()
         try:
-            if options.auto_join:
-                yak.join(roomname)
             print "(ctrl-c to exit)"
             while 1:
                 greenhouse.stdout.write("%s> " % roomname)
@@ -88,6 +89,13 @@ def converse(options, roomname, username):
     def int_handler(signum, frame):
         greenhouse.end(speaker_glet)
     signal.signal(signal.SIGINT, int_handler)
+
+    yak.join(roomname)
+    joined.set()
+
+    # even with the SIGINT handler in place, the epoll wait underneath
+    # the greenhouse.stdin.readline() call will get EINTR first
+    greenhouse.set_ignore_interrupts()
 
     finished.wait()
 
