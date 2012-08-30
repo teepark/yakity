@@ -10,6 +10,20 @@ from . import client, configs, service
 signal = greenhouse.patched("signal")
 
 
+cmds = {}
+def command(name):
+    return lambda f: (cmds.__setitem__(name, f), f)[1]
+
+def default_cmd(options, *args):
+    print """missing command.
+
+available commands:
+- %s""" % ("\n- ".join(cmds.keys()),)
+
+def getcmd(name):
+    return cmds.get(name, default_cmd)
+
+@command('runservice')
 def runservice(options, instance_name):
     conf = configs.get_configs(options.configfile)
     instance = [inst for inst in conf.instances if inst.name == instance_name]
@@ -29,6 +43,7 @@ def runservice(options, instance_name):
         pass
 
 
+@command('listen')
 def listen(options, roomname, username=None):
     conf = configs.get_configs(options.configfile)
     yak = client.Yakity(conf, client.prepare_client(
@@ -55,6 +70,7 @@ def listen(options, roomname, username=None):
         pass
 
 
+@command('converse')
 def converse(options, roomname, username):
     conf = configs.get_configs(options.configfile)
     finished = greenhouse.Event()
@@ -100,18 +116,21 @@ def converse(options, roomname, username):
     finished.wait()
 
 
+@command('join')
 def join(options, roomname, username):
     conf = configs.get_configs(options.configfile)
     yak = client.Yakity(conf, client.prepare_client(
         conf, room_hint=roomname, user_hint=username), username)
     yak.join(roomname)
 
+@command('depart')
 def depart(options, roomname, username):
     conf = configs.get_configs(options.configfile)
     yak = client.Yakity(conf, client.prepare_client(
         conf, room_hint=roomname, user_hint=username), username)
     yak.depart(roomname)
 
+@command('say')
 def say(options, roomname, username, msg):
     conf = configs.get_configs(options.configfile)
     yak = client.Yakity(conf, client.prepare_client(
