@@ -34,7 +34,7 @@ def prepare_client(conf, room_hint=None, user_hint=None):
 
     client = junction.Client(peers)
     client.connect()
-    while not client.wait_on_connections():
+    while not client.wait_connected():
         client.reset()
         client.connect()
     return client

@@ -35,7 +35,7 @@ def runservice(options, instance_name):
     node = junction.Hub(instance.addr, instance.peers)
     service.register(node, conf, instance)
     node.start()
-    node.wait_on_connections()
+    node.wait_connected()
 
     try:
         greenhouse.Event().wait()
